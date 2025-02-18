@@ -12,6 +12,7 @@ type Task struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Completed   bool      `json:"completed"`
+	Tags        []string  `json:"tags"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -64,7 +65,7 @@ func (m *Manager) saveTasks() error {
 	return os.WriteFile(m.filename, data, 0644)
 }
 
-func (m *Manager) CreateTask(title, description string) (*Task, error) {
+func (m *Manager) CreateTask(title, description string, tags []string) (*Task, error) {
 	if title == "" {
 		return nil, errors.New("task titlecannot be empty")
 	}
@@ -76,6 +77,7 @@ func (m *Manager) CreateTask(title, description string) (*Task, error) {
 		ID:          m.lastID,
 		Title:       title,
 		Description: description,
+		Tags:        tags,
 		Completed:   false,
 		CreatedAt:   now,
 		UpdatedAt:   now,
@@ -91,6 +93,29 @@ func (m *Manager) CreateTask(title, description string) (*Task, error) {
 func (m *Manager) GetTaskByID(id int) (*Task, error) {
 	for i, task := range m.tasks {
 		if task.ID == id {
+			return &m.tasks[i], nil
+		}
+	}
+	return nil, errors.New("task not found")
+}
+
+func (m *Manager) UpdateTask(id int, title, description string, completed bool, tags []string) (*Task, error) {
+	for i, task := range m.tasks {
+		if task.ID == id {
+			if title != "" {
+				m.tasks[i].Title = title
+			}
+			if description != "" {
+				m.tasks[i].Description = description
+			}
+			if tags != nil {
+				m.tasks[i].Tags = tags
+			}
+			m.tasks[i].Completed = completed
+			m.tasks[i].UpdatedAt = time.Now()
+			if err := m.saveTasks(); err != nil {
+				return nil, err
+			}
 			return &m.tasks[i], nil
 		}
 	}
