@@ -45,6 +45,25 @@ func NewManager(filename string) (*Manager, error) {
 	return m, nil
 }
 
+func (m *Manager) loadTasks() error {
+	data, err := os.ReadFile(m.filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return json.Unmarshal(data, &m.tasks)
+}
+
+func (m *Manager) saveTasks() error {
+	data, err := json.MarshalIndent(m.tasks, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(m.filename, data, 0644)
+}
+
 func (m *Manager) CreateTask(title, description string) (*Task, error) {
 	if title == "" {
 		return nil, errors.New("task titlecannot be empty")
@@ -63,6 +82,9 @@ func (m *Manager) CreateTask(title, description string) (*Task, error) {
 	}
 
 	m.tasks = append(m.tasks, task)
+	if err := m.saveTasks(); err != nil {
+		return nil, err
+	}
 	return &task, nil
 }
 
@@ -73,15 +95,4 @@ func (m *Manager) GetTaskByID(id int) (*Task, error) {
 		}
 	}
 	return nil, errors.New("task not found")
-}
-
-func (m *Manager) loadTasks() error {
-	data, err := os.ReadFile(m.filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	return json.Unmarshal(data, &m.tasks)
 }
