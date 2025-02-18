@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -120,4 +122,58 @@ func (m *Manager) UpdateTask(id int, title, description string, completed bool, 
 		}
 	}
 	return nil, errors.New("task not found")
+}
+
+func (m *Manager) DeleteTask(id int) error {
+	for i, task := range m.tasks {
+		if task.ID == id {
+			m.tasks = append(m.tasks[:i], m.tasks[i+1:]...)
+			return m.saveTasks()
+		}
+	}
+	return errors.New("task not found")
+}
+
+func (m *Manager) ListTasks(filterCompleted *bool, filterTag string, sortBy string) []Task {
+	tasks := make([]Task, len(m.tasks))
+	copy(tasks, m.tasks)
+
+	if filterCompleted != nil {
+		filtered := make([]Task, 0)
+		for _, task := range tasks {
+			if task.Completed == *filterCompleted {
+				filtered = append(filtered, task)
+			}
+		}
+		tasks = filtered
+	}
+
+	if filterTag != "" {
+		filtered := make([]Task, 0)
+		for _, task := range tasks {
+			for _, tag := range task.Tags {
+				if strings.EqualFold(tag, filterTag) {
+					filtered = append(filtered, task)
+					break
+				}
+			}
+		}
+		tasks = filtered
+	}
+
+	switch strings.ToLower(sortBy) {
+	case "created":
+		sort.Slice(tasks, func(i, j int) bool {
+			return tasks[i].CreatedAt.Before(tasks[j].CreatedAt)
+		})
+	case "updated":
+		sort.Slice(tasks, func(i, j int) bool {
+			return tasks[i].UpdatedAt.Before(tasks[j].UpdatedAt)
+		})
+	case "title":
+		sort.Slice(tasks, func(i, j int) bool {
+			return tasks[i].Title > tasks[j].Title
+		})
+	}
+	return tasks
 }
