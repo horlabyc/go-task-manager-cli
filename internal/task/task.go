@@ -1,7 +1,9 @@
 package task
 
 import (
+	"encoding/json"
 	"errors"
+	"os"
 	"time"
 )
 
@@ -15,15 +17,32 @@ type Task struct {
 }
 
 type Manager struct {
-	tasks  []Task
-	lastID int
+	tasks    []Task
+	lastID   int
+	filename string
 }
 
-func NewManager() *Manager {
-	return &Manager{
-		tasks:  make([]Task, 0),
-		lastID: 0,
+// NewManager creates a new task manager with persistence
+func NewManager(filename string) (*Manager, error) {
+	m := &Manager{
+		tasks:    make([]Task, 0),
+		filename: filename,
 	}
+
+	// Load existing tasks if file exists
+	if err := m.loadTasks(); err != nil {
+		return nil, err
+	}
+
+	// Set last task ID to the highest ID in the list
+	if len(m.tasks) > 0 {
+		for _, task := range m.tasks {
+			if task.ID > m.lastID {
+				m.lastID = task.ID
+			}
+		}
+	}
+	return m, nil
 }
 
 func (m *Manager) CreateTask(title, description string) (*Task, error) {
@@ -45,7 +64,6 @@ func (m *Manager) CreateTask(title, description string) (*Task, error) {
 
 	m.tasks = append(m.tasks, task)
 	return &task, nil
-
 }
 
 func (m *Manager) GetTaskByID(id int) (*Task, error) {
@@ -55,4 +73,15 @@ func (m *Manager) GetTaskByID(id int) (*Task, error) {
 		}
 	}
 	return nil, errors.New("task not found")
+}
+
+func (m *Manager) loadTasks() error {
+	data, err := os.ReadFile(m.filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return json.Unmarshal(data, &m.tasks)
 }
