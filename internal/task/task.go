@@ -69,7 +69,7 @@ func (m *Manager) saveTasks() error {
 
 func (m *Manager) CreateTask(title, description string, tags []string) (*Task, error) {
 	if title == "" {
-		return nil, errors.New("task titlecannot be empty")
+		return nil, errors.New("task title cannot be empty")
 	}
 
 	m.lastID++

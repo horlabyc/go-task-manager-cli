@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "title": "Learn Go",
+    "description": "Study Go programming",
+    "completed": true,
+    "tags": [
+      "learning",
+      "programming"
+    ],
+    "created_at": "2025-02-20T16:03:26.655393+01:00",
+    "updated_at": "2025-02-20T16:03:26.655393+01:00"
+  }
+]
